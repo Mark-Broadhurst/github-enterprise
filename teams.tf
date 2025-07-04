@@ -142,6 +142,17 @@ resource "github_repository_collaborators" "team_collaborators" {
   }
 }
 
+resource "github_actions_runner_group" "runner_group" {
+  for_each = { for team in var.teams : team.name => team if team.repos != null && length(team.repos) > 0 }
+
+  name       = each.key
+  visibility = "selected"
+  selected_repository_ids = [
+    for repo in each.value.repos != null ? each.value.repos : [] :
+    github_repository.team_repo[replace(lower("${each.value.alias != null ? each.value.alias : each.key}-${repo}"), " ", "")].repo_id
+  ]
+}
+
 #resource "github_repository_environment" "env" {
 #  for_each    = local.team_environments
 #  repository  = each.value.repo_name
